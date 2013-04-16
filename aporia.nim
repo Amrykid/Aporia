@@ -13,7 +13,7 @@ import pegs, streams, times, parseopt, parseutils, asyncio, sockets, encodings
 import tables, algorithm
 # Local imports:
 import settings, utils, cfg, search, suggest, AboutDialog, processes,
-       CustomStatusBar
+       CustomStatusBar, locale
 {.push callConv:cdecl.}
 
 const
@@ -70,11 +70,13 @@ except ECFGParse, EInvalidValue:
 except EIO:
   win.autoSettings = cfg.defaultAutoSettings()
   win.globalSettings = cfg.defaultGlobalSettings()
+  
+loadCfgLocaleData(LocaleManager, r".\lang\LocaleData.cfg")
 
 proc updateMainTitle(pageNum: int) =
   if win.Tabs.len()-1 >= pageNum:
     var name = ""
-    if win.Tabs[pageNum].filename == "": name = "Untitled" 
+    if win.Tabs[pageNum].filename == "": name = LocaleManager.getKey("UntitledHeader")
     else: name = win.Tabs[pageNum].filename.extractFilename
     win.w.setTitle("Aporia - " & name)
 
@@ -132,7 +134,7 @@ proc saveTab(tabNr: int, startpath: string, updateGUI: bool = true) =
         win.globalSettings = newSettings
         config = true
       except:
-        win.statusbar.setTemp("Error parsing config: " & getCurrentExceptionMsg(),
+        win.statusbar.setTemp(LocaleManager.getKey("ConfigParseError") & getCurrentExceptionMsg(),
                               UrgError, 8000)
         return
     
@@ -152,11 +154,11 @@ proc saveTab(tabNr: int, startpath: string, updateGUI: bool = true) =
         
         updateMainTitle(tabNr)
         if config:
-          win.statusbar.setTemp("Config saved successfully.", UrgSuccess)
+          win.statusbar.setTemp(LocaleManager.getKey("ConfigSaveSuccess"), UrgSuccess)
         else:
-          win.statusbar.setTemp("File saved successfully.", UrgSuccess)
+          win.statusbar.setTemp(LocaleManager.getKey("FileSaveSuccess"), UrgSuccess)
     else:
-      error(win.w, "Unable to write to file: " & OSErrorMsg())
+      error(win.w, LocaleManager.getKey("FileSaveError") & OSErrorMsg())
 
 proc saveTabAs(tab: int, startPath: string): bool =
   ## Returns whether we saved to a different filename.
